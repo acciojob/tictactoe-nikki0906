@@ -1,81 +1,60 @@
 //your JS code here. If required.
-const playerInput = document.getElementById('player-input');
-    const player1Input = document.getElementById('player-1');
-    const player2Input = document.getElementById('player-2');
-    const submitButton = document.getElementById('submit');
-    const gameBoard = document.getElementById('game-board');
-    const messageDiv = document.querySelector('.message');
+document.getElementById('submit').addEventListener('click', function() {
+    const player1 = document.getElementById('player-1').value;
+    const player2 = document.getElementById('player-2').value;
+
+    if (player1 && player2) {
+        startGame(player1, player2);
+    } else {
+        alert("Please enter names for both players.");
+    }
+});
+
+function startGame(player1, player2) {
+    const board = document.querySelector('.board');
+    const message = document.querySelector('.message');
     const cells = document.querySelectorAll('.cell');
 
-    let currentPlayer;
-    let player1;
-    let player2;
-    let gameOver = false;
+    board.style.display = 'grid';
+    message.textContent = `${player1}, you're up!`;
 
-    // Start the game when submit button is clicked
-    submitButton.addEventListener('click', startGame);
+    let currentPlayer = player1;
+    let currentSymbol = 'X';
+    let gameActive = true;
+    const gameState = ['', '', '', '', '', '', '', '', ''];
 
-    function startGame() {
-      player1 = player1Input.value;
-      player2 = player2Input.value;
-      currentPlayer = player1;
-      playerInput.style.display = 'none';
-      gameBoard.style.display = 'block';
-      messageDiv.textContent = `${currentPlayer}, you're up`;
-    }
-
-    // Handle cell clicks
     cells.forEach(cell => {
-      cell.addEventListener('click', handleCellClick);
+        cell.addEventListener('click', function() {
+            const cellIndex = parseInt(cell.id) - 1;
+
+            if (gameState[cellIndex] === '' && gameActive) {
+                gameState[cellIndex] = currentSymbol;
+                cell.textContent = currentSymbol;
+                if (checkWin(gameState, currentSymbol)) {
+                    message.textContent = `${currentPlayer}, congratulations you won!`;
+                    gameActive = false;
+                } else if (gameState.every(cell => cell !== '')) {
+                    message.textContent = `It's a draw!`;
+                    gameActive = false;
+                } else {
+                    currentPlayer = currentPlayer === player1 ? player2 : player1;
+                    currentSymbol = currentSymbol === 'X' ? 'O' : 'X';
+                    message.textContent = `${currentPlayer}, you're up!`;
+                }
+            }
+        });
     });
+}
 
-    function handleCellClick(e) {
-      if (gameOver || e.target.textContent !== '\xa0') return;
+function checkWin(gameState, currentSymbol) {
+    const winningCombos = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+    ];
 
-      e.target.textContent = currentPlayer === player1 ? 'x' : 'o';
-      checkWinner();
-      if (!gameOver) {
-        togglePlayer();
-      }
-    }
+    return winningCombos.some(combo => {
+        return combo.every(index => gameState[index] === currentSymbol);
+    });
+}
 
-    // Toggle between players
-    function togglePlayer() {
-      currentPlayer = currentPlayer === player1 ? player2 : player1;
-      messageDiv.textContent = `${currentPlayer}, you're up`;
-    }
-
-    // Check for a winner
-    function checkWinner() {
-      const winningCombos = [
-        [1, 2, 3], [4, 5, 6], [7, 8, 9], // Rows
-        [1, 4, 7], [2, 5, 8], [3, 6, 9], // Columns
-        [1, 5, 9], [3, 5, 7]              // Diagonals
-      ];
-
-      for (let combo of winningCombos) {
-        const [a, b, c] = combo;
-        const cellA = document.getElementById(a).textContent;
-        const cellB = document.getElementById(b).textContent;
-        const cellC = document.getElementById(c).textContent;
-
-        if (cellA !== '\xa0' && cellA === cellB && cellB === cellC) {
-          messageDiv.textContent = `${currentPlayer} congratulations you won!`;
-          highlightCells(combo);
-          gameOver = true;
-          return;
-        }
-      }
-
-      if ([...cells].every(cell => cell.textContent !== '\xa0')) {
-        messageDiv.textContent = "It's a draw!";
-        gameOver = true;
-      }
-    }
-
-    // Highlight winning cells
-    function highlightCells(combo) {
-      combo.forEach(cellId => {
-        document.getElementById(cellId).classList.add('highlight');
-      });
-    }
